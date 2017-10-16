@@ -1,0 +1,405 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Search College and Course</title>
+<!--<script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.2.1.min.js"></script>-->
+<script type="text/javascript" src="https://115.124.123.121/ActivitiWebClient/static/js/jquery.js"></script>
+<link href="https://fonts.googleapis.com/css?family=Lato:400,700,900|Open+Sans:400,600,700" rel="stylesheet">
+<link type="text/css" rel="stylesheet" href="style.css"/>
+<link type="text/css" rel="stylesheet" href="bootstrap.min.css"/>
+</head>
+
+<body class="mid-wrap" style="  font-family: 'Lato', sans-serif;">
+<script type="text/javascript">
+	var coursesTable;
+	//var appContextPath = 'https://115.124.123.121/ActivitiWebClient';
+	var appContextPath = '/ActivitiWebClient';
+$(function(){
+	$("#searchCollege").on("click",function(){
+		var input = {};
+		input["courseIds"] = $('#list_courses').val();
+		input["stateIds"] = $('#list_states').val();
+		input["univIds"] = $('#list_universities').val();
+		input["collegeIds"] = $('#list_college').val();
+		input["status"] = $("input[name='status']:checked").val();
+		input["management"] = $("input[name='management']:checked").val();
+		
+		var formData = JSON.stringify(input);
+		console.log(formData);
+		$.ajax({
+			type:'POST',
+			url:  'https://115.124.123.121/ActivitiWebClient/open/searchCourse',
+			data: formData,
+			dataType: "json",
+			contentType: "application/json; charset=utf-8",
+			success: function(res) {
+				populateDataTable(res);
+			}
+		})
+	})
+	
+	populateCourseData();
+	populateState();
+	populateUniv();
+	populateCollege();
+});
+
+function populateDataTable(response){
+	var tbody= "";
+	var resultCount = 0;
+	var seatCount = 0;
+	$.each(response,function(k,v){
+		var stastus;
+		if(v["status"]!=null){stastus=v["status"]}else{stastus="N/A"}
+		var recognition = "";
+		if(v["recognization"] == 'R'){
+			recognition = "Recognized";
+		}
+		if(v["recognization"] == 'P'){
+			recognition = "Permitted";
+		}
+		tbody= tbody+"<tr>";
+		tbody= tbody+"<td>"+v["index"]+"</td>";			
+		tbody= tbody+"<td>"+v["courseName"]+"</td>";	
+		tbody= tbody+"<td>"+v["stateName"]+"</td>";
+		tbody = tbody + '<td><a href="javascript:void(0);" onclick="populateCollegeData('+ v["collegeId"] + ')">' + v["collegeName"] + '</a></td>';
+		tbody= tbody+"<td>"+v["univName"]+"</td>";		
+		tbody= tbody+"<td>"+v["managementText"]+"</td>";
+		tbody= tbody+"<td>"+v["year"]+"</td>";			
+		tbody= tbody+"<td>"+v["seat"]+"</td>";			
+		tbody= tbody+"<td>" + recognition + '&nbsp;' +stastus + "</td>";		
+		tbody= tbody+"<td >"+v["date"]+"</td>";	
+		tbody = tbody + "</tr>";
+		resultCount++;
+		seatCount += v["seat"];
+	});
+	$('#totalCount').html(resultCount);
+	$('#totalSeat').html(seatCount);
+	if(coursesTable){
+		coursesTable.destroy();
+		$('#courses').find('tbody').html('');
+	}
+	$('#courses').find('tbody').html(tbody);
+	var t = coursesTable = $('#courses').DataTable( {"lengthMenu" : [500, 100, 50, 40, 30, 20, 10]});
+	t.on( 'order.dt search.dt', function () {
+        t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
+            cell.innerHTML = i+1;
+        } );
+    } ).draw();
+	$('#courses').show();
+	$('#searchSummary').show();
+	
+}
+
+function populateCollegeModal(id){
+	$.ajax({
+		type:'GET',
+		//url: 'https://115.124.123.121/ActivitiWebClient/open/getCollegeDetails?id='+id,
+		url: appContextPath +'/open/getCollegeDetails?id='+id, 
+		async: true,
+		contentType: "application/json; charset=utf-8",
+		success: function(res) {
+			var courseData = res;
+			$('#collegeModal').modal('show', {backdrop: 'static'});
+		}
+	});
+}
+
+function populateCourseData(){
+	var urlVar = 'https://115.124.123.121/ActivitiWebClient/open/courseSelect'
+	$.ajax({
+		type:'GET',
+		url: urlVar,		
+		async: true,
+		contentType: "application/json; charset=utf-8",
+		success: function(res) {
+			var courseData = res;
+			courseData.splice(0, 1);
+			//console.log(JSON.stringify(courseData) );
+			//$('#list_courses').multiselect('dataprovider', courseData);
+			html='';
+			html=html+'<option value="">ALL</option>';
+			html=html+'<option value="Diploma">ALL DIPLOMA</option>';
+			html=html+'<option value="MD">ALL MD</option>';
+			html=html+'<option value="MS">ALL MS</option>';
+			html=html+'<option value="DM">ALL DM</option>';
+			html=html+'<option value="M.Ch.">ALL MCH</option>';
+			html=html+'<option value="Diploma,MD,MS,DM,M.Ch.">ALL EXCEPT MBBS</option>';
+			html=html+'<option value="MD,MS,Diploma">ALL MD/MS/DIPLOMA</option>';
+			html=html+'<option value="DM,M.Ch.">ALL DM/MCH</option>';
+			html=html+'<option value="2">M.B.B.S.</option>';
+			$.each(courseData,function(k,v){
+				if(v["label"] == "M.B.B.S."){
+					
+				}else{
+					html=html+'<option value="'+v["label"]+'">'+v["label"]+'</option>';
+				}
+				
+			})
+			$('#list_courses').html(html);
+		}
+	});
+}
+
+function populateState(){
+	var urlVar = 'https://115.124.123.121/ActivitiWebClient/open/stateSelect';
+	$.ajax({
+		type:'GET',
+		url: urlVar,
+		async: true,
+		contentType: "application/json; charset=utf-8",
+		success: function(res) {
+			var stateData = res;
+			stateData.splice(0, 1);
+			//$('#list_states').multiselect('dataprovider', stateData);
+			html='';
+			html=html+'<option value="">ALL</option>';
+			$.each(res,function(k,v){
+				html=html+'<option value="'+v["value"]+'">'+v["label"]+'</option>';
+			})
+			$('#list_states').html(html);
+		}
+	});
+}
+
+function populateUniv(){
+	var states = $('#list_states option:selected');
+	var urlVar = 'https://115.124.123.121/ActivitiWebClient/open/univSelect';
+	if(states.val()){
+		urlVar = urlVar +'?stateIds=' + states.val();
+	}
+	$.ajax({
+		type:'GET',
+		url: urlVar,
+		async: true,
+		contentType: "application/json; charset=utf-8",
+		success: function(res) {
+			var univData = res;
+			//$('#list_universities').multiselect('dataprovider', univData);
+			html='';
+			html=html+'<option value="">ALL</option>';
+			$.each(res,function(k,v){
+				html=html+'<option value="'+v["value"]+'">'+v["label"]+'</option>';
+			})
+			$('#list_universities').html(html);
+		}
+	});
+}
+
+function populateCollege(){
+	var state = $('#list_states option:selected');
+	var univ = $('#list_universities option:selected');
+	var states=state.val();
+	var univs=univ.val();
+	//var urlVar = 'https://115.124.123.121/ActivitiWebClient/open/getDataFromService?service=getCollegesForStateUniversity';
+	var urlVar = appContextPath + '/open/getDataFromService?service=getCollegesForStateUniversity';
+	var input = {};
+	input['stateIds']=states;
+	input['univIds']=univs;
+	var formData=JSON.stringify(input);
+	$.ajax({
+		type: 'POST',
+		url: urlVar,
+		data : formData,
+		dataType: "json",
+		async: true,
+		contentType: "application/json; charset=utf-8",
+		success: function(res) {
+			var collegeData=res;
+			console.log(collegeData);
+			html='';
+			html=html+'<option value="">ALL</option>';
+			$.each(collegeData, function (k,v){
+				var collegeId=v["collegeId"];
+				var collegeName=v["collegeName"];				  
+				  html=html+'<option value="'+collegeId+'">'+collegeName+'</option>';
+			})					
+			$('#list_college').html(html);
+		},
+		error : function() {
+			alert("error");
+		}
+	});
+
+}
+
+function populateCollegeData(id) {
+	$.ajax({
+		type:'GET',
+		//url: 'https://115.124.123.121/ActivitiWebClient/open/getCollegeById?id='+id,
+		url: appContextPath + '/open/getCollegeById?id='+id,
+		contentType: "application/json; charset=utf-8",
+		dataType: 'json',
+		success: function(res) {
+			console.log(res);
+			populateModal(res);
+		}
+	})
+     
+}
+function populateModal(v){
+	
+	var mngmnt  = v["managementText"];
+	/*switch(v["management"]){
+	case 1:mngmnt="Trust"; 
+	break; 
+	case 2:mngmnt="Society";
+	break; 
+	case 3:mngmnt="Municipal";
+	break;
+	case 4:mngmnt="State Government";
+	break;case 
+	5:mngmnt="Standalone PG Institute";
+	break;case 
+	6:mngmnt="Central Government";
+	break; 
+	default:mngmnt="N/A"}
+	}*/
+	var tbody='';
+	var college='';
+	var contList;
+	var contactList=[];
+	if(v['contacts'].length != 0){
+		var contact;
+		contact=v['contacts'];
+		$.each(contact,function(k,v1){
+			var name,desgn,resContact,offCont,fax,email;
+			if(checkNullAndBlank(v1['name'])){name=v1['name'];}else{name='';}
+			if(checkNullAndBlank(v1['desgination'])){desgn=v1['desgination'];}else{desgn='';}
+			if(checkNullAndBlank(v1['residencePh'])){resContact=v1['residencePh'];}else{resContact='N/A';}
+			if(checkNullAndBlank(v1['residencePh'])){offCont=v1['officePh'];}else{offCont='N/A';}
+			if(checkNullAndBlank(v1['fax'])){fax=v1['fax'];}else{fax='N/A';}
+			if(checkNullAndBlank(v1['email'])){email=v1['email'];}else{email='';}
+			var contactSingle=name+'<br>'+desgn+'<br>'+"Phones (off) :&nbsp;"+offCont + "&nbsp;&nbsp;Phones (Resi):&nbsp;" + resContact + ":&nbsp;&nbsp;Fax:&nbsp;"+fax +"&nbsp;&nbsp;Email:&nbsp;"+email +'<br><br>';
+			contactList.push(contactSingle);
+		})
+		contList=contactList.join("");
+		
+	}
+	else{
+		contList='';
+	}
+	var yic,telph,fax1,mail,dateOfPerm,epbax,address,city;
+	if(checkNullAndBlank(v["yearOfInc"])){yic=v["yearOfInc"];}else{yic='N/A';}
+	if(checkNullAndBlank(v["telephone"])){telph=v["telephone"];}else{telph='';}
+	if(checkNullAndBlank(v["fax"])){fax1=v["fax"];}else{fax1='N/A';}
+	if(checkNullAndBlank(v["email"])){mail=v["email"];}else{mail='N/A';}
+	if(checkNullAndBlank(v["epabx"])){epbax=v["epabx"];}else{epbax='N/A';}
+	if(checkNullAndBlank(v["dateOfPermission"])){dateOfPerm=v["dateOfPermission"];}else{dateOfPerm='N/A';}
+	if(checkNullAndBlank(v["address"])){address=v["address"];}else{address='';}
+	if(checkNullAndBlank(v["city"])){city= v["city"];}else{city='';}
+	college=v["collegeName"];	
+	if(checkNullAndBlank(v["website"])){
+	tbody = tbody + "<tr><td colspan='4'>" +'College Name ' + "</td><td colspan= '4'>" + college+'&nbsp;&nbsp;' + '<a  href=' + 'http://'+ v['website'] + ' target= "_blank">' + '[Click here to open website]' + '</a>' + "</td></tr>";
+	}else{
+	tbody = tbody + "<tr><td colspan='1'>" +'College Name ' + "</td><td colspan='7'>" + college + "</td></tr>";
+	}
+	tbody = tbody + "<tr><td>" + 'Management' + "</td><td>" + mngmnt + "</td><td colspan='2'>"+ 'Year of Inception of College' + "</td><td>" + yic  + "</td><td colspan='2'>"+ 'Date of Permission for MBBS'+ "</td><td>" + dateOfPerm + "</td></tr>";
+	tbody = tbody + "<tr><td>" + 'Telephone' + "</td><td>"  +epbax+ "</td><td colspan='2'>"+ 'Fax' + "</td><td>" + fax1  + "</td><td colspan='2'>"+ 'Email'+ "</td><td>" + mail + "</td></tr>";
+	
+	tbody = tbody + "<tr><td colspan='1'>" + 'Address' + "</td><td colspan='7'>"  +address+ '&nbsp' + city + "</td></tr>";
+	
+	tbody = tbody + "<tr><td colspan='1'>" +'Contact Information' + "</td><td colspan='7'>" + contList + "</td></tr>";
+	$(".modal .modal-title").html(college);
+	$(".modal .modal-body .collegeModal").html(tbody);
+	$(".modal").modal("show");
+	waitingDialog.hide();
+}
+function checkNullAndBlank(value){
+	if( null != value && "" != value){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+</script>
+<form id="course_search" name="course_search" action="#">
+  <input type="hidden"             name="_csrf" value="855a7d74-9035-4435-b8eb-fa8d5b9b6700" />
+  Specify search filters
+  <table id="dnn_ctr933_default_Search11_tblshowCollege"
+								class="table table-bordered">
+    <tbody>
+      <tr>
+        <td bgcolor="#CCDEE0" align="right" valign="top" class="label_text">Course&nbsp;Name&nbsp;</td>
+        <td colspan="3" align="left" valign="top"><select id="list_courses" name="courseIds"></select></td>
+      </tr>
+      <tr>
+        <td align="right" bgcolor="#CCDEE0" valign="middle" class="label_text">Status&nbsp;</td>
+        <td align="left" valign="top" nowrap="nowrap"><table id="dnn_ctr933_default_Search11_rdbRecStatus" border="0" cellpadding="10px;" cellspacing="10px;">
+            <tbody>
+              <tr>
+                <td>
+                	<input id="status1" type="radio" name="status" value="" checked="checked">
+                  	<label for="status1">All</label></td>
+                <td><input id="status2" type="radio" name="status" value="1">
+                  <label for="status2">Recognized</label></td>
+                <td><input id="status3" type="radio" name="status" value="2">
+                  <label for="status3">Permitted</label></td>
+                <td><input id="status4" type="radio" name="status" value="3">
+                  <label for="status4">Others</label></td>
+              </tr>
+            </tbody>
+          </table></td>
+        <td bgcolor="#CCDEE0" colspan="-2" align="right" valign="top" nowrap="nowrap" class="label_text">Management</td>
+        <td align="left" valign="top" nowrap="nowrap"><table id="dnn_ctr933_default_Search11_rdbMgmt" border="0">
+            <tbody>
+              <tr>
+                <td><input id="management1" type="radio" name="management" value="" checked="checked">
+                  <label for="management1">All</label></td>
+                <td><input id="management2" type="radio" name="management" value="1">
+                  <label for="management2">Government</label></td>
+                <td><input id="management3" type="radio" name="management" value="2">
+                  <label for="management3">Private</label></td>
+              </tr>
+            </tbody>
+          </table></td>
+      </tr>
+      <tr>
+        <td bgcolor="#CCDEE0" align="right" valign="top" class="label_text">State</td>
+        <td align="left" valign="top"><select size="4" multiple="multiple" id="list_states" name="stateIds" onchange="populateUniv(); populateCollege();"></select></td>
+        <td bgcolor="#CCDEE0" align="right" valign="top" class="label_text">University</td>
+        <td align="left" valign="top"><select size="4" multiple="multiple" id="list_universities" class="univ_area" name="univIds"  onchange="populateCollege();"></select></td>
+      </tr>
+      <tr>
+        <td valign="top" bgcolor="#CCDEE0" align="right" class="label_text">College&nbsp;Name&nbsp;</td>
+        <td align="left" valign="top" colspan="3"><select size="4" multiple="multiple" id="list_college" name="collegeIds" class="state_area"> </select></td>
+      </tr>
+      <tr>
+        <td align="center" valign="top" colspan="4"><button type="button" class="btn btn-default" id="searchCollege"> View Results </button></td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="text-right"> <a href="https://www.mciindia.org/ActivitiWebClient/informationdesk/viewClosedcollegewisecourse" target="_blank">View Closed Colleges/Institutions</a> </p>
+</form>
+<div id="searchSummary" style="display: none;">
+  <p>
+    <label>Total results found : <span id="totalCount"></span></label>
+  </p>
+  <p>
+    <label>Total Seats : <span id="totalSeat"></span></label>
+  </p>
+</div>
+<table class="display" cellspacing="0" width="100%" id="courses"
+					style="display: none; table-layout: fixed;">
+  <thead class="col_font">
+    <tr style="background-color: #CCDEE0;">
+      <th scope="col">Sl.No.</th>
+      <th scope="col">Course Name</th>
+      <th scope="col">Select a State</th>
+      <th scope="col">Name and Address of <br>
+        Medical College / Medical Institution</th>
+      <th scope="col">University Name</th>
+      <th scope="col">Management of College</th>
+      <th scope="col">Year of Inception of College</th>
+      <th scope="col">Annual Intake (Seats)</th>
+      <th scope="col">Status of MCI Recognition</th>
+      <th scope="col">Date of LOP</th>
+    </tr>
+  </thead class="col_font">
+  <tbody>
+  </tbody>
+</table>
+</body>
+</html>
