@@ -1,0 +1,33 @@
+https://www.mciindia.org/ActivitiWebClient/informationdesk/collegesearch
+
+Hi Mukesh, 
+
+Please find details below :
+
+This is url which is having an error :
+https://115.124.123.121/CMS/searchcollegeandcourses.html
+These are the below services which is used for developing the above html
+
+URL https://115.124.123.121/ActivitiWebClient/informationdesk/collegesearch
+ 
+There are multiple service calls are there.
+Request URL:https://www.mciindia.org/ActivitiWebClient/open/courseSelect
+Request Method:GET
+ 
+Request URL:https://115.124.123.121/ActivitiWebClient/open/stateSelect
+Request Method:GET
+ 
+Request URL:https://115.124.123.121/ActivitiWebClient/open/univSelect
+Request Method:GET
+ 
+Request URL:https://115.124.123.121/ActivitiWebClient/open/getDataFromService?service=getCollegesForStateUniversity
+Request Method:POST
+ 
+ 
+Once you click on search button,
+Request URL:https://115.124.123.121/ActivitiWebClient/open/searchCourse
+Request Method:POST
+Post Params as part of request body json {"courseIds":"2","stateIds":["2"],"univIds":["952"],"collegeIds":["10025"],"status":"","management":""}
+
+Thanks 
+Santhosh 
