@@ -1,0 +1,27 @@
+$(function(){
+	$("#searchCollege").on("click",function(){
+		var input = {};
+		input["courseIds"] = $('#list_courses').val();
+		input["stateIds"] = $('#list_states').val();
+		input["univIds"] = $('#list_universities').val();
+		input["collegeIds"] = $('#list_college').val();
+		input["status"] = $("input[name='status']:checked").val();
+		input["management"] = $("input[name='management']:checked").val();
+		
+		var formData = JSON.stringify(input);
+		console.log(formData);
+		$.ajax({
+			type:'POST',
+			url:  'https://115.124.123.121/ActivitiWebClient/open/searchCourse',
+			data: formData,
+			dataType: "json",
+			contentType: "application/json; charset=utf-8",
+			success: function(res) {
+				populateDataTable(res);
+			}
+		})
+	})
+
+
+In this ajax call given url(https://115.124.123.121/ActivitiWebClient/open/searchCourse) is bring HTML responce It should come json response. that the reason we are not able to bring 
+view result.
