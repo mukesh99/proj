@@ -9,7 +9,7 @@
 <link type="text/css" rel="stylesheet" href="style.css"/>
 <link type="text/css" rel="stylesheet" href="bootstrap.min.css"/>
 </head>
-<body class="mid-wrap" style="  font-family: 'Lato', sans-serif;">
+<body class="mid-wrap" style="font-family: 'Lato', sans-serif;">
 <script type="text/javascript">
 	var coursesTable;
 	//var appContextPath = 'https://115.124.123.121/ActivitiWebClient';
@@ -28,27 +28,26 @@ $(function(){
 		console.log(formData);
 		$.ajax({
 			type:'POST',
-			url:  'courseSelect.json',
+			url:  'https://115.124.123.121/ActivitiWebClient/open/searchCourse',
 			data: formData,
 			dataType: "json",
 			contentType: "application/json; charset=utf-8",
 			success: function(res) {
 				populateDataTable(res);
-				console.log(res);
 			}
 		})
 	})
 	
 	populateCourseData();
 	populateState();
-	populateUniv();
-	populateCollege();
+	//populateUniv();
+	//populateCollege();
 });
 function populateDataTable(response){
 	var tbody= "";
 	var resultCount = 0;
 	var seatCount = 0;
-	$.each(response.myCourse,function(k,v){
+	$.each(response,function(k,v){
 		var stastus;
 		if(v["status"]!=null){stastus=v["status"]}else{stastus="N/A"}
 		var recognition = "";
@@ -80,7 +79,7 @@ function populateDataTable(response){
 		$('#courses').find('tbody').html('');
 	}
 	$('#courses').find('tbody').html(tbody);
-var t = coursesTable = $('#courses').DataTable( {"lengthMenu" : [500, 100, 50, 40, 30, 20, 10]});
+	var t = coursesTable = $('#courses').DataTable( {"lengthMenu" : [500, 100, 50, 40, 30, 20, 10]});
 	t.on( 'order.dt search.dt', function () {
         t.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
             cell.innerHTML = i+1;
@@ -104,8 +103,8 @@ function populateCollegeModal(id){
 	});
 }
 function populateCourseData(){
-	var urlVar = './courseSelect.json';
-	$.ajax({
+	var urlVar = 'https://115.124.123.121/ActivitiWebClient/open/courseSelect'
+		$.ajax({
 		type:'GET',
 		url: urlVar,		
 		async: true,
@@ -139,19 +138,19 @@ function populateCourseData(){
 	});
 }
 function populateState(){
-	var urlVar = './stateSelect.json';
+	var urlVar = 'https://115.124.123.121/ActivitiWebClient/open/stateSelect';
 	$.ajax({
 		type:'GET',
 		url: urlVar,
 		async: true,
-		dataType: 'json',
+		contentType: "application/json; charset=utf-8",
 		success: function(res) {
-			//var stateData = res;
-			//stateData.splice(0, 1);
+			var stateData = res;
+			stateData.splice(0, 1);
 			//$('#list_states').multiselect('dataprovider', stateData);
 			html='';
 			html=html+'<option value="">ALL</option>';
-			$.each(res.myState,function(k,v){
+			$.each(res,function(k,v){
 				html=html+'<option value="'+v["value"]+'">'+v["label"]+'</option>';
 			})
 			$('#list_states').html(html);
@@ -160,7 +159,7 @@ function populateState(){
 }
 function populateUniv(){
 	var states = $('#list_states option:selected');
-	var urlVar = './univSelect.json';
+	var urlVar = 'https://115.124.123.121/ActivitiWebClient/open/univSelect';
 	if(states.val()){
 		urlVar = urlVar +'?stateIds=' + states.val();
 	}
@@ -168,13 +167,13 @@ function populateUniv(){
 		type:'GET',
 		url: urlVar,
 		async: true,
-		dataType: 'json',
+		contentType: "application/json; charset=utf-8",
 		success: function(res) {
-			//var univData = res;
+			var univData = res;
 			//$('#list_universities').multiselect('dataprovider', univData);
 			html='';
 			html=html+'<option value="">ALL</option>';
-			$.each(res.myUniv,function(k,v){
+			$.each(res,function(k,v){
 				html=html+'<option value="'+v["value"]+'">'+v["label"]+'</option>';
 			})
 			$('#list_universities').html(html);
@@ -187,7 +186,7 @@ function populateCollege(){
 	var states=state.val();
 	var univs=univ.val();
 	//var urlVar = 'https://115.124.123.121/ActivitiWebClient/open/getDataFromService?service=getCollegesForStateUniversity';
-	var urlVar = './getDataFromService.json';
+	var urlVar = appContextPath + '/open/getDataFromService?service=getCollegesForStateUniversity';
 	var input = {};
 	input['stateIds']=states;
 	input['univIds']=univs;
@@ -196,15 +195,15 @@ function populateCollege(){
 		type: 'POST',
 		url: urlVar,
 		data : formData,
-		dataType: "html",
+		dataType: "json",
 		async: true,
-		dataType: 'json',
+		contentType: "application/json; charset=utf-8",
 		success: function(res) {
 			var collegeData=res;
 			console.log(collegeData);
 			html='';
 			html=html+'<option value="">ALL</option>';
-			$.each(collegeData.DataService, function (k,v){
+			$.each(collegeData, function (k,v){
 				var collegeId=v["collegeId"];
 				var collegeName=v["collegeName"];				  
 				  html=html+'<option value="'+collegeId+'">'+collegeName+'</option>';
@@ -374,7 +373,7 @@ function checkNullAndBlank(value){
   </p>
 </div>
 <table class="display" cellspacing="0" width="100%" id="courses"
-					style=" table-layout: fixed;">
+					style="display: none; table-layout: fixed;">
   <thead class="col_font">
     <tr style="background-color: #CCDEE0;">
       <th scope="col">Sl.No.</th>
